@@ -267,16 +267,41 @@ Visit [`localhost:5173`](http://localhost:5173) in your browser to see the list 
 
 ## Add Cart
 
-Update the `src/routes/page.js` with the following code, to create a cart on page load:
+Update `src/routes/+page.svelte` with the following code, to create a cart on page load:
 
-```js
-/** @type {import(./$types').PageLoad} */
-export async function load({ fetch }) {
-    const res = await fetch(`http://localhost:9000/store/products`);
-    const payload = await res.json();
-    return { payload };
-}
+```svelte
+<script>
+  /** @type {import('./$types').PageData} */
+  export let data;
+
+  import { onMount } from 'svelte';
+
+  	onMount(async () => {
+		fetch(`http://localhost:9000/store/carts`, {
+        method: "POST",
+        credentials: "include",
+    })
+    .then((response) => response.json())
+    .then(({ cart }) => {
+        localStorage.setItem("cart_id", cart.id)
+        console.log("The cart ID is " + localStorage.getItem("cart_id"));
+    });
+		
+	});
+</script>
+
+<h1>Welcome to the Medusa SvelteKit Store</h1>
+<h2>Products</h2>
+<ul>
+    {#each data.payload.products as product}
+        <li>{product.title} - ${product.variants[0].prices[0].amount}</li>
+    {/each}
+</ul>
 ```
+
+Revisit `localhost:5173` in  your browser and open the `Console` section of your Dev Tools. You should see a message with a cart ID to confirm creation of the cart.
+
+![Confirmation of Cart Creation](/confirmation-of-cart-creation.png)
 
 Update each product in `src/routes/+page.svelte` with a button to add a product to the cart.
 
@@ -285,35 +310,36 @@ Update each product in `src/routes/+page.svelte` with a button to add a product 
   /** @type {import('./$types').PageData} */
   export let data;
 
-  fetch(`http://localhost:9000/store/carts`, {
+  import { onMount } from 'svelte';
+
+  	onMount(async () => {
+		fetch(`http://localhost:9000/store/carts`, {
         method: "POST",
         credentials: "include",
     })
     .then((response) => response.json())
     .then(({ cart }) => {
         localStorage.setItem("cart_id", cart.id)
-        // assuming you have a state variable to store the cart
-        // setCart(cart)
-    })
+        console.log("The cart ID is " + localStorage.getItem("cart_id"));
+    });
+		
+	});
 
   function addProductToCart(variant_id) {
     const id = localStorage.getItem("cart_id");
-    if (id) {
-        fetch(`http://localhost:9000/store/carts/${id}/line-items`, {
-            method: "POST",
-            dentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                variant_id,
-                quantity: 1,
-            }),
-        })
-            .then((response) => response.json());
-            //.then(({ cart }) => setCart(cart));
-    }
-
+    fetch(`http://localhost:9000/store/carts/${id}/line-items`, {
+        method: "POST",
+        dentials: "include",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            variant_id,
+            quantity: 1,
+        }),
+    })
+        .then((response) => response.json());
+        //.then(({ cart }) => setCart(cart));
   }
 </script>
 
@@ -323,10 +349,10 @@ Update each product in `src/routes/+page.svelte` with a button to add a product 
     {#each data.payload.products as product}
         <li>
             {product.title} - ${product.variants[0].prices[0].amount}
-            <button on:click={
-                addProductToCart(product.variants[0].id); 
-                alert('Added to Cart');
-              }
+            <button on:click={() => { 
+                  addProductToCart(product.variants[0].id); 
+                  alert('Added to Cart');
+                  }}
             >
                 Add To Cart
             </button>
@@ -335,46 +361,205 @@ Update each product in `src/routes/+page.svelte` with a button to add a product 
 </ul>
 ```
 
-Create a new folder inside `src/routes` named `cart`. Add a `+page.svelte` and a `+page.js` files to the `cart` folder.
+Confirm whether the products are being added to the cart by performing a curl request as follows:
 
-Add the following code to `src/routes/cart/+page.js`:
-
-```js
-/** @type {import(./$types').PageLoad} */
-export async function load({ fetch }) {
-    const id = localStorage.getItem("cart_id")
-
-    const res = await fetch(`http://localhost:9000/store/carts/${id}`, {
-        credentials: "include",
-    });
-    const cart = await res.json();
-    return { cart };
-}
+```bash
+curl localhost:9000/store/carts/cart_01HRBTB0X79NAGJYY8T6D5BGK6
 ```
 
-To finally load the cart, when a user navigates to the cart page, create a new file named, `src/routes/cart/+page.svelte`:
+Replace with the specific cart id as listed in your browser console. If all is working your cart should be populated with some products.
+
+The next step is to display the cart by creating a cart page.
+
+Create a new folder inside `src/routes` named `cart`. Add a `+page.svelte` file to the `cart` folder.
+
+Add the following code to `src/routes/cart/+page.svelte`:
 
 ```svelte
 <script>
-  /** @type {import('./$types').PageData} */
-  export let data;
+    import { onMount } from "svelte";
+
+    let data;
+    let total;
+    let items = [];
+
+    onMount(async () => {
+        const id = localStorage.getItem("cart_id");
+        const res = await fetch(`http://localhost:9000/store/carts/${id}`, {
+            credentials: "include",
+        });
+        data = await res.json();
+        items = data.cart.items;
+        total = data.cart.total;
+    });
 </script>
 
-  <h1>Welcome to the Medusa SvelteKit Store</h1>
-  <h2>Cart</h2>
+<h1>Welcome to the Medusa SvelteKit Store</h1>
+<h2>Cart</h2>
 
-  <ul>
-    {#each data.cart.items as item}
+<ul>
+    {#each items as item}
         <li>
             TITLE: {item.title} PRICE: {item.unit_price} QUANTITY: {item.quantity}
         </li>
     {/each}
 </ul>
+<p>The total price for your cart is {total}</p>
 ```
 
-## Add Checkout Flow
+Test your cart page by adding some products to your cart then visiting `localhost:5173/cart` in your browser. You should see a list of products with the quantity and price info as well as the cart total.
 
+![Cart Page](/cart-page.png)
 
+Next, associate your cart with an email address for the user. This is necessary to complete the cart.
+
+```svelte
+<script>
+    import { onMount } from "svelte";
+
+    let data;
+    let email;
+    let total;
+    let items = [];
+
+    onMount(async () => {
+        const id = localStorage.getItem("cart_id");
+        const res = await fetch(`http://localhost:9000/store/carts/${id}`, {
+            credentials: "include",
+        });
+        data = await res.json();
+        items = data.cart.items;
+        total = data.cart.total;
+    });
+
+    function addCustomer() {
+        const id = localStorage.getItem("cart_id");
+        fetch(`http://localhost:9000/store/carts/${id}`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                email: email,
+            }),
+        })
+        .then((response) => response.json())
+        .then(({ cart }) => {
+            console.log("Customer ID is " + cart.customer_id)
+            console.log("Customer email is " + cart.email)
+        });
+    }
+</script>
+
+<h1>Welcome to the Medusa SvelteKit Store</h1>
+<h2>Cart</h2>
+
+<ul>
+    {#each items as item}
+        <li>
+            TITLE: {item.title} PRICE: {item.unit_price} QUANTITY: {item.quantity}
+        </li>
+    {/each}
+</ul>
+<p>The total price for your cart is {total}</p>
+<p>Enter your email to Proceed to Checkout</p>
+<input id="email" type="email" bind:value={email}>
+<button type="submit" on:click={() => {
+    addCustomer();
+    alert('Added your Email');
+    }}
+>
+    Submit
+</button>
+
+```
+
+## Add Checkout Functionality
+
+Create a page called, `src/routes/checkout/+page.svelte` to load the checkout page.
+
+Add the following code to initialize the payment session:
+
+```svelte
+<script>
+    import { onMount } from "svelte";
+
+    onMount(async () => {
+        const id = localStorage.getItem("cart_id");
+        fetch(`http://localhost:9000/store/carts/${id}/payment-sessions`, {
+            method: "POST",
+            credentials: "include",
+        })
+        .then((response) => response.json())
+        .then(({ cart }) => {
+            console.log(cart.payment_sessions)
+        })
+    });
+</script>
+
+<h1>Welcome to the Medusa SvelteKit Store</h1>
+<h2>Checkout</h2>
+```
+
+Visit `localhost:5173/checkout` in your browser and open up the Console in your Devtools.
+
+![Init Payment Session](init-payment-session.png)
 
 ## Add Payment Provider
+
+
+
+Next add Cart completion to the checkout process, by adding the following code:
+
+```svelte
+<script>
+import { onMount } from "svelte";
+
+    onMount(async () => {
+        const id = localStorage.getItem("cart_id");
+        fetch(`http://localhost:9000/store/carts/${id}/payment-sessions`, {
+            method: "POST",
+            credentials: "include",
+        })
+        .then((response) => response.json())
+        .then(({ cart }) => {
+            console.log(cart.payment_sessions)
+        })
+    });
+
+function completeCart() {
+    const id = localStorage.getItem("cart_id");
+    fetch(`http://localhost:9000/store/carts/${id}/complete`, {
+        method: "POST",
+        dentials: "include",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+    .then((response) => response.json())
+    .then(({ type, data }) => {
+        console.log(type, data)
+    })
+  }
+</script>
+
+<h1>Welcome to the Medusa SvelteKit Store</h1>
+<h2>Checkout</h2>
+
+<button on:click={() => { 
+        completeCart(); 
+        alert('Cart Complete');
+        }}
+>
+    Complete Cart
+</button>
+
+```
+
+Click on the `Complete Cart` button to test if the order was completed using the manual Medusa payment provider. You should see the following:
+
+![Order Complete](/order-complete.png)
+
+
 
