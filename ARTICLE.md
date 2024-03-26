@@ -506,7 +506,7 @@ Visit `localhost:5173/checkout` in your browser and open up the Console in your 
 
 ![Init Payment Session](init-payment-session.png)
 
-## Add Payment Provider
+## Add Cart Completion
 
 
 
@@ -562,4 +562,99 @@ Click on the `Complete Cart` button to test if the order was completed using the
 ![Order Complete](/order-complete.png)
 
 
+## Add Payment Provider
 
+Stripe is a battle-tested and unified platform for transaction handling. Stripe supplies you with the technical components needed to handle transactions safely and all the analytical features necessary to gain insight into your sales. These features are also available in a safe test environment which allows for a concern-free development process.
+
+Using the `medusa-payment-stripe plugin`, you will set up your Medusa project with Stripe as a payment processor.
+
+Create a Stripe account and retrieve the API Keys and secrets from your account to connect Medusa to your Stripe account. Add them to the environment variables in `.env` in `my-medusa-store`.
+
+```
+STRIPE_API_KEY=sk_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+### Install Stripe Plugin
+
+Open up your terminal, in the root of your Medusa backend. Stop your Medusa server and run the following command to install the Stripe plugin:
+
+```bash
+npm install medusa-payment-stripe
+```
+
+### Configure the Stripe Plugin
+
+Next, you need to add configurations for your Stripe plugin.
+
+In `medusa-config.js`, add the following at the end of the plugins array:
+
+```js
+const plugins = [
+  // ...
+  {
+    resolve: `medusa-payment-stripe`,
+    options: {
+      api_key: process.env.STRIPE_API_KEY,
+      webhook_secret: process.env.STRIPE_WEBHOOK_SECRET,
+    },
+  },
+]
+```
+
+The Stripe plugin uses two configuration options. The `api_key` is essential to both your development and production environments. As for the `webhook_secret`, it’s essential for your production environment. So, if you’re only using Stripe for development you can skip adding the value for this option at the moment.
+
+### Add Stripe to Region in Medusa Admin
+
+1. Go to Settings → Regions.
+2. Select a region to edit.
+3. Click on the three dots icon at the top right of the first section on the right.
+4. Click on Edit Region Details from the dropdown.
+5. Under the providers section, select the payment providers you want to add to the region.
+6. Unselect the payment providers you want to remove from the region.
+7. Click the "Save and close" button.
+
+### Add Stripe Key to Sveltekit Storefront
+
+Add your Stripe Publishable Key to your Sveltekit storefront environment variables. Open up `.env` in your Sveltekit Storefront and add the following:
+
+```
+SVELTEKIT_PUBLIC_STRIPE_KEY=<YOUR_PUBLISHABLE_KEY>
+```
+
+### Workflow Overview
+
+1. During checkout when the user reaches the payment section, you should create payment sessions. This will initialize the `payment_sessions` array in the `cart` object received. The `payment_sessions` is an array of available payment processors.
+2. If Stripe is available as a payment processor, you should select Stripe as the payment session for the current cart. This will initialize the `payment_session` object in the `cart` object to include data related to Stripe and the current payment session. This includes the payment intent and client secret.
+3. After the user enters their card details and submits the form, confirm the payment with Stripe.
+4. If the payment is confirmed successfully, complete the cart in Medusa. Otherwise show an error.
+
+### Install Dependencies
+
+Install the necessary dependencies to show the UI and handle the payment confirmation:
+
+```bash
+npm install --save @stripe/stripe-js
+```
+
+You’ll also use Medusa’s JS Client to easily call Medusa’s REST APIs:
+
+```bash
+npm install @medusajs/medusa-js
+```
+
+### Initialize Stripe
+
+### Implement the Workflow
+
+### Capture Payments
+
+## Deployment
+
+### Deploy Storefront
+
+### Deploy Medusa Server
+
+### Deploy Medusa Admin
+
+## Conclusion
