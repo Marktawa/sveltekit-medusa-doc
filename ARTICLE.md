@@ -29,15 +29,15 @@ Support materials:
 
 Medusa is an open source tool that can help you set up a headless ecommerce server backend with relative ease. Couple that with Sveltekit, a frontend framework for building web apps. What do you get? A full stack, modular ecommerce app that can support a wide range of use cases.
 
-What is this tutorial for?
+### What is this tutorial for?
 
 This tutorial will teach you how to set up a simple ecommerce web app using Medusa as your store backend and Sveltekit for the visual storefront. It will showcase the fundamental building blocks required to run the app in development, testing, staging and production stages as well as showcase how you can deploy the app. At the end of this tutorial you should have acquired the overarching knowledge necessary in building ecommerce apps of a composable nature.
 
-Why Medusa?
+### Why Medusa?
 
 Medusa is one of the few if not the only open source ecommerce backend that is feature rich allowing developers to make all sorts of ecommerce apps to fit any use case. Medusa is also gaining popularity within the developer community such that it worth taking a look at how you can make an ecommerce app using Medusa. Furthermore, Medusa supports all sorts of ecommerce app architectures. Be it headless, composable, semi-modular you name it, all scenarios work well with Medusa.
 
-Why Sveltekit?
+### Why Sveltekit?
 
 Sveltekit is a framework based on the popular JavaScript library called Svelte. It has also gained a lot of popularity in the frontend community in the past few years. It is simple to understand, it is fast and performant and a useful alternative to the React ecosystem. 
 
@@ -56,9 +56,9 @@ In addition to knowing these tools, your computer system should have the followi
 - git (optional)
 
 Before proceeding with the tutorial you can check out the following links for useful resources:
-- Video demo.
-- Live link of the app.
-- Git repo containing the project source code.
+- [Video demo]().
+- [Live link of the app]().
+- [Git repo containing the project source code]().
 
 ## Installation and setup of the Medusa server API
 
@@ -367,7 +367,7 @@ Confirm whether the products are being added to the cart by performing a curl re
 curl localhost:9000/store/carts/cart_01HRBTB0X79NAGJYY8T6D5BGK6
 ```
 
-Replace with the specific cart id as listed in your browser console. If all is working your cart should be populated with some products.
+Replace with the specific `cart id` as listed in your browser console. If all is working your cart should be populated with some products.
 
 The next step is to display the cart by creating a cart page.
 
@@ -573,11 +573,14 @@ Stripe is a battle-tested and unified platform for transaction handling. Stripe 
 
 Using the `medusa-payment-stripe plugin`, you will set up your Medusa project with Stripe as a payment processor.
 
-Create a Stripe account and retrieve the API Keys and secrets from your account to connect Medusa to your Stripe account. Add them to the environment variables in `.env` in `my-medusa-store`.
+[Create a Stripe account](https://dashboard.stripe.com/register) and retrieve the [Stripe Secret API Key](https://dashboard.stripe.com/test/apikeys) from your account to connect Medusa to your Stripe account. 
+
+![Stripe Secret key](/stripe-secret-key.png)
+
+Add the key to your environment variables in `.env` in `my-medusa-store`.
 
 ```
 STRIPE_API_KEY=sk_...
-STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 ### Install Stripe Plugin
@@ -606,32 +609,33 @@ const plugins = [
 ]
 ```
 
-The Stripe plugin uses two configuration options. The `api_key` is essential to both your development and production environments. As for the `webhook_secret`, it’s essential for your production environment. So, if you’re only using Stripe for development you can skip adding the value for this option at the moment.
-
 ### Add Stripe to Region in Medusa Admin
 
-1. Go to Settings → Regions.
-2. Select a region to edit.
-3. Click on the three dots icon at the top right of the first section on the right.
-4. Click on Edit Region Details from the dropdown.
-5. Under the providers section, select the payment providers you want to add to the region.
-6. Unselect the payment providers you want to remove from the region.
-7. Click the "Save and close" button.
+Make sure your Medusa backend server is running, then log in to your Medusa Admin Dashboard.
+
+![Medusa Admin Dashboard - Home Page](/medusa-admin-dashboard.png)
+
+Go to **Settings** then select **Regions**.
+
+![Medusa Settings - Select Regions](/medusa-admin-select-region-settings.png)
+
+Select a region to edit.
+
+![Medusa Regions Page](/medusa-admin-region-page.png)
+
+Click on the three dots icon at the top right of the first section on the right. Click on Edit Region Details from the dropdown.
+
+Under the providers section, add all `Stripe` options to the region. Unselect the payment providers you want to remove from the region. Click the "Save and close" button.
+
+![Add Stripe to Region](/edit-region-details-stripe-add-stripe.png)
 
 ### Add Stripe Key to Sveltekit Storefront
 
-Add your Stripe Publishable Key to your Sveltekit storefront environment variables. Open up `.env` in your Sveltekit Storefront and add the following:
+Add your Stripe Publishable API Key to your Sveltekit storefront environment variables. Open up `.env` in your Sveltekit Storefront and add the following:
 
 ```
 PUBLIC_STRIPE_KEY=<YOUR_PUBLISHABLE_KEY>
 ```
-
-### Workflow Overview
-
-1. During checkout when the user reaches the payment section, you should create payment sessions. This will initialize the `payment_sessions` array in the `cart` object received. The `payment_sessions` is an array of available payment processors.
-2. If Stripe is available as a payment processor, you should select Stripe as the payment session for the current cart. This will initialize the `payment_session` object in the `cart` object to include data related to Stripe and the current payment session. This includes the payment intent and client secret.
-3. After the user enters their card details and submits the form, confirm the payment with Stripe.
-4. If the payment is confirmed successfully, complete the cart in Medusa. Otherwise show an error.
 
 ### Install Dependencies
 
@@ -782,12 +786,6 @@ Update the checkout page for the Stripe payment option. Open up `src/routes/chec
 </style>
 ```
 
-### Test Payment
-
-### Capture Payments
-
-Visit the Orders section in your Medusa Admin and 
-
 ### Add Success Page
 
 Create a new directory named `thanks` in the `src/routes` path. In it add a `+page.svelte` file with the following code:
@@ -805,7 +803,7 @@ Update `src/routes/checkout/+page.svelte` so that once the payment is done the s
   import { onMount } from 'svelte';
   import { loadStripe } from '@stripe/stripe-js';
   import { PUBLIC_STRIPE_KEY } from '$env/static/public';
-  import { Elements, PaymentElement, LinkAuthenticationElement, Address } from 'svelte-stripe';
+  import { Elements, PaymentElement } from 'svelte-stripe';
   import Medusa from '@medusajs/medusa-js';
 
   let stripe = null;
@@ -885,14 +883,12 @@ Update `src/routes/checkout/+page.svelte` so that once the payment is done the s
     {clientSecret}
     theme="flat"
     labels="floating"
-    variables={{ colorPrimary: '#7c4dff' }}
-    rules={{ '.Input': { border: 'solid 1px #0002' } }}
+    variables={{ colorPrimary: '#000' }}
+    rules={{ '.Input': { border: 'solid 1px #000' } }}
     bind:elements
   >
     <form on:submit|preventDefault={submit}>
-      <LinkAuthenticationElement />
       <PaymentElement />
-      <Address mode="billing" />
 
       <button disabled={processing}>
         {#if processing}
@@ -923,9 +919,9 @@ Update `src/routes/checkout/+page.svelte` so that once the payment is done the s
   button {
     padding: 1rem;
     border-radius: 5px;
-    border: solid 1px #ccc;
+    border: solid 1px #000;
     color: white;
-    background: #7c4dff;
+    background: #000;
     font-size: 1.2rem;
     margin: 1rem 0;
   }
@@ -933,6 +929,24 @@ Update `src/routes/checkout/+page.svelte` so that once the payment is done the s
 ```
 
 ### Test Payment
+
+Test if the Stripe integration has worked well by making test a payment. If everything is working your checkout page should appear like this.
+
+![Checkout Page](/checkout-no-ui.png)
+
+A successful payment should lead users to the following page:
+
+![Success Page](/success-no-ui.png)
+
+### Capture Payment
+
+Visit the Orders section in your Medusa Admin and click on the order you placed earlier in your storefront to capture it.
+
+![Capture payment in Medusa Dashboard](/capture-payment-02.png)
+
+You can check to see if the payment was successful in your Stripe Dashboard [Payment Section](https://dashboard.stripe.com/test/payments), after capturing it in your Medusa Dashboard.
+
+![Successful payment in Stripe Dashboard](/successful-payment-stripe.png)
 
 ## UI Design
 
@@ -949,7 +963,7 @@ Add the following code to `src/routes/+layout.svelte`:
     <header id="header">
         <a href="/">HOME</a>
         <h1><a href="/">MY STORE</a></h1>
-        <a href="/cart.html">CART</a>
+        <a href="/cart">CART</a>
     </header>
     <main id="main">
       <slot />
@@ -961,41 +975,41 @@ Add the following code to `src/routes/+layout.svelte`:
 </div>
 
 <style>
-* {
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Ubuntu, sans-serif;
-}
-
-.pagewrapper {
-    max-width: 1440px;
-    margin: 0 auto;
-}
-
-header {
-    padding: 0.6rem 1.2rem;
-    display: flex;
-    justify-content: space-between;
-    text-align: center;
-    align-items: center;
-}
-
-a {
-    list-style: none;
-    text-decoration: none;
-    color: inherit;
-}
-
-#footer {
-    font-size: 0.6rem;
-    display: flex;
-    justify-content: space-between;
-    padding: 0.75rem 1.5rem;
-}
-</style>
+  * {
+      margin: 0;
+      padding: 0;
+  }
+  
+  .pagewrapper {
+      max-width: 1440px;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Ubuntu, sans-serif;
+      margin: 0 auto;
+  }
+  
+  header {
+      padding: 0.6rem 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      text-align: center;
+      align-items: center;
+      border-bottom: 1px solid #000;
+  }
+  
+  a {
+      list-style: none;
+      text-decoration: none;
+      color: inherit;
+  }
+  
+  footer {
+      font-size: 0.6rem;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+      padding: 0.75rem 1.5rem;
+      border-top: 1px solid #000;
+  }
+  </style>
 ```
 
 ### Home Page
@@ -1025,21 +1039,20 @@ Update the code for the home page, `src/routes/+page.svelte` as follows:
       });
   });
 
-  async function addProductToCart(variant_id) {
+  function addProductToCart(variant_id) {
     const id = localStorage.getItem("cart_id");
     fetch(`http://localhost:9000/store/carts/${id}/line-items`, {
-        method: "POST",
-        dentials: "include",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            variant_id,
-            quantity: 1,
-        }),
-    })
-        .then((response) => response.json());
-        //.then(({ cart }) => setCart(cart));
+      method: "POST",
+      dentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        variant_id,
+        quantity: 1,
+      }),
+    }).then((response) => response.json());
+    //.then(({ cart }) => setCart(cart));
   }
 </script>
 
@@ -1562,82 +1575,175 @@ Make a payment using the Stripe Test card `4242 4242 4242 4242` and this will le
 
 In this section we will look into the deployment of the ecommerce app. We will start off with the deployment of the Medusa Server and Admin then look into the deployment of the Sveltekit storefront.
 
+<!--
 ## Deploy Medusa Server
 
 We will deploy the Medusa Backend Server on [Render](https://render.com/). Render offers a free tier which is sufficient enough to host a Medusa Backend app.
 
 A bit about Render. Render is a unified cloud to build and run all apps and websites with free TLS certificates, a global CDN, DDoS protection, a private network, and auto-deploy from Git.
 
-### Set up a Project on Render
+### Set up Render
 
-Sign up and log in to your Render account and create a project.
+Sign up and log in to your Render account.
+
+![Render Dashboard](/dashboard-render-com.png)
 
 ### Create the PostgreSQL Database (for non-Neon users)
 
 If you have created a PostgreSQL Database using Neon please skip this step.
 
+Click the **New+** button, then click on the **PostgreSQL** button in your Render Dashboard or visit [dashboard.render.com/new/database](https://dashboard.render.com/new/database).
+
+![New PostgreSQL Render]()
+
+After clicking this, you will be redirected to the next page, where you can name and create the database.
+
+In the **Name** field, name your database server, `medusa_db-server`. In the **Database** field, give your database the same name as your local PostgreSQL database. For example, in this tutorial the name for the local hosted PostgreSQL database is `medusa_db`. Likewise for the **User** field, enter the same name as your local user, `medusa_admin`.
+
+For the **Region** field, select the most appropriate region based on your location. Set the **PostgreSQL Version** field to the latest version available.
+
+After filling these fields and choose a suitable plan for you and then click **Create Database**.
+
+![Create Database Render](/dashboard.render.com_new_database.png)
+
+Subsequently, you will be redirected to the PostgreSQL general page, where you will see key information related to your newly created database. This includes the `Hostname`, `Port`, `Database`, `Username`, `Password`, `Internal Database URL`, `External Database URL`, and `PSQL Command`.
+
+![Newly Created Database on Render](/database-info-render.png)
+
 ### Create Redis Database
 
-Create a Redis database to handle the event queues of your Medusa server. On your Render dashboard, click the **New +** button and the **Redis** button.
+Create a Redis database to handle the event queues of your Medusa server. On your Render dashboard, click the **New +** button and the **Redis** button or visit [dashboard.render.com/new/redis](https://dashboard.render.com/new/redis)
 
-![New Redis Database on Render]()
+You will be redirected to the next page, where you can name and create the Redis database instance. You can name it, `medusa-redis` or any other appropriate name.
 
-After clicking this, you will be redirected to the next page, where you can name and create the Redis database instance.
+![Name and Create Redis Database Instance](/render-new-redis-2.png)
 
-![Name and Create Redis Database Instance]()
+By clicking the `Create Redis` button, you will be redirected to the Redis general page, where you will information related to your newly-created Redis instance.
 
-By clicking the `Create Redis` button, you will be redirected to the Redis general page, where you will see the newly-created Redis.
+![Render Redis Instance Info]()
 
-![Render Redis Instance URL]()
+You will use the **Internal Redis URL** in the next section.
 
-You will use the Redis URL in the next section.
+### Create GitHub Repo
 
-### Prepare Server
+Navigate to the Medusa server directory `my-medusa-store` in your local machine. Duplicate the folder and create a new GitHub repo based on this directory to handle all the config related to the server only.
 
-Navigate to the Medusa server directory `my-medusa-store` in your local machine. Open the `medusa-config.js` file. Ensure that you have configured your database.
+### Configure Server for Production
 
+Open the `medusa-config.js` file in your new server repo.
+
+Update the following parts to enable caching using Redis.
+
+Uncomment the inner part of the following section:
 ```js
-module.exports = {
-  projectConfig: {
-    redis_url: REDIS_URL,
-    database_url: DATABASE_URL,
-    database_type: "postgres",
-    store_cors: STORE_CORS,
-    admin_cors: ADMIN_CORS,
-  },
-  plugins,
-};
+const modules = {
+  /*eventBus:
+    resolve: "@medusajs/event-bus-redis",
 ```
 
-Next, remove the `Dockerfile` file from your repository's root directory. If it exists, Render searches for this file automatically and use it to deploy your server. However, you will not be using Docker in the deployment process.
+Uncomment the following section as well:
+```js
+  // Uncomment the following lines to enable REDIS
+  // redis_url: REDIS_URL
+```
+
+It then becomes:
+
+```js
+//...
+const modules = {
+  eventBus: {
+    resolve: "@medusajs/event-bus-redis",
+    options: {
+      redisUrl: REDIS_URL
+    }
+  },
+  cacheService: {
+    resolve: "@medusajs/cache-redis",
+    options: {
+      redisUrl: REDIS_URL
+    }
+  },
+};
+
+/** @type {import('@medusajs/medusa').ConfigModule["projectConfig"]} */
+const projectConfig = {
+  jwtSecret: process.env.JWT_SECRET,
+  cookieSecret: process.env.COOKIE_SECRET,
+  store_cors: STORE_CORS,
+  database_url: DATABASE_URL,
+  admin_cors: ADMIN_CORS,
+  redis_url: REDIS_URL
+};
+//...
+```
+
+Since we are deploying the admin separately, disable the admin plugin's [serve option](https://docs.medusajs.com/admin/configuration#plugin-options).
+
+```js
+const plugins = [
+  // ...
+  {
+    resolve: "@medusajs/admin",
+    /** @type {import('@medusajs/admin').PluginOptions} */
+    options: {
+      // only enable `serve` in development
+      // you may need to add the NODE_ENV variable
+      // manually
+      serve: process.env.NODE_ENV === "development",
+      // other options...
+      autoRebuild: true,
+      develop: {
+        open: process.env.OPEN_BROWSER !== "false",
+      },
+    },
+  },
+]
+```
+
+This ensures that the admin isn't built or served in production. You can also change `@medusajs/admin` dependency to be a devdependency in `package.json`.
+
+Also, change the `build` command to remove the command that builds the admin inside the `package.json` file:
+
+```js
+"scripts": {
+  // ...
+  "build": "cross-env npm run clean && npm run build:server",
+}
+//...
+"devDependencies": {
+  //...
+  "@medusajs/admin": "^7.1.11",
+}
+```
 
 Commit your changes, and push them to your remote GitHub repository. Once your repository is ready on GitHub, return to your Render dashboard to proceed with the deployment.
 
-On your Render dashboard, click the **New +** button, then click on the **Web Service** button.
+On your Render dashboard, click the **New +** button, then click on the **Web Service** button or visit [dashboard.render.com/create?type=web](https://dashboard.render.com/create?type=web).
 
-![New Web Service on Render]()
+Select **Build and deploy from a Git repository** in the **Create a new Web Service** menu then click on **Next**:
+
+![Render - Create a new Web Service](/render-new-web-service.png)
 
 Connect your Medusa server repo. Select or search for your repository and click the **Connect** button.
 
-![Connect repo to Render]()
+![Connect repo to Render](/render-select-repo_type=web.png)
 
-You will be redirected to the **Settings** page when clicking the **Connect** button
-
-![Render Settings Page]()
+This opens a new page where you can add all the necessary information for your server app service.
 
 Here, you must provide a unique name for your project, specify the region in which your web service will run, the repository branch to be used for your web service, the root directory, the runtime, the build command, and the start command.
 
 Please note that you should replace the original start command with the following:
 
 ```bash
-medusa migrations run && medusa develop
+medusa migrations run && medusa start
 ```
 
 This particular start command enables you to create and execute your migrations or update the Medusa backend. Additionally, it ensures that these migrations are executed before the backend starts, guaranteeing their completion.
 
 ### Add Environment Variables
 
-To add an environment variable, click the **Advanced** button above the **Create Web Service button** on the **Settings** page and select **Add Environment Variable** with the following variables:
+To add an environment variable, go to the **Environment Variables** section and select **Add Environment Variable** with the following variables:
 
 ```
 PORT=9000
@@ -1645,53 +1751,311 @@ JWT_SECRET=something
 COOKIE_SECRET=something
 DATABASE_URL=<<DATABASE_URL>>
 REDIS_URL=<<REDIS_URL>>
+STORE_CORS=http://localhost:5173
+STRIPE_API_KEY=<<STRIPE SECRET KEY>>
 ```
 
 > **NOTE**
 >
+> The `STORE_CORS` will be updated later after deploying the storefront.
 > It’s recommended to use other values for `JWT_SECRET` and `COOKIE_SECRET` than `something` for better security.
 
-The last properties are the URLs to connect to the databases. You need to add the database URLs you got when you created the Postgres and Redis databases earlier.
+
+The last properties are the URLs to connect to the databases. You need to add the internal database URLs you got when you created the Postgres and Redis databases earlier.
 
 Neon users simply need to add the URL from the previous steps.
 
-![Add Database URLs]()
-
 Scroll to the bottom of the **Settings** page and click **Create Web Service** button.
 
-Upon successful deployment, you will observe a status message indicating that the deployment has been successful with the text **deploy succeeded**.
+![Render Web Service Configuration](/render-new-web-info.png)
 
-![Deployment Overview in Render Dashboard]()
+Upon successful deployment, you will observe a status message indicating that the deployment has been successful with the text **Live** with the URL to your backend displayed as well.
+
+![Deployment Overview in Render Dashboard](/render-successful-deploy.png)
 
 ### Test the Backend
 
-Once the backend has been successfully deployed, you can access the app in your browser using the domain name. For instance, entering the URL `<YOUR_APP_URL>/store/products` will display the currently available products on your backend.
+Once the backend has been successfully deployed, you can access the app in your browser using the domain name. For instance, entering the URL `<YOUR_APP_URL>/store/products` in your browser will display the currently available products on your backend.
 
-![Successful Deployment]()
+![Successful Deployment Test](/test-server.png)
+-->
+
+## Deploy Medusa Server
+
+We will deploy the Medusa Backend Server on [Railway](https://railway.app). Railway provides a free trial (no credit card required) that allows you to deploy your Medusa backend along with PostgreSQL and Redis databases. This is useful mainly for development and demo purposes. Sign up for a Railway account and proceed with the following steps.
+
+### Create GitHub Repo
+
+Navigate to the Medusa server directory `my-medusa-store` in your local machine. Duplicate the folder and create a new GitHub repo based on this directory to handle all the config related to the server only.
+
+### Add Railway Configuration File
+
+To avoid errors during the installation process, it's recommended to use `yarn` for installing the dependencies. Alternatively, pass the `--legacy-peer-deps` option to the npm command.
+
+Add in the root of your Medusa server project the file, `railway.toml`, with the content based on the package manager of your choice:
+
+
+Using `yarn`:
+```toml
+[build]
+builder = "NIXPACKS"
+
+[build.nixpacksPlan.phases.setup]
+nixPkgs = ["nodejs", "yarn"]
+
+[build.nixpacksPlan.phases.install]
+cmds=["yarn install"]
+```
+
+Using `npm`:
+```toml
+[build]
+builder = "NIXPACKS"
+
+[build.nixpacksPlan.phases.setup]
+nixPkgs = ["nodejs", "npm"]
+
+[build.nixpacksPlan.phases.install]
+cmds=["npm install --legacy-peer-deps"]
+```
+
+### Configure Server for Production
+
+Open the `medusa-config.js` file in your new server repo.
+
+Update the following parts to enable caching using Redis.
+
+Uncomment the inner part of the following section:
+```js
+const modules = {
+  /*eventBus:
+    resolve: "@medusajs/event-bus-redis",
+```
+
+Uncomment the following section as well:
+```js
+  // Uncomment the following lines to enable REDIS
+  // redis_url: REDIS_URL
+```
+
+It then becomes:
+
+```js
+//...
+const modules = {
+  eventBus: {
+    resolve: "@medusajs/event-bus-redis",
+    options: {
+      redisUrl: REDIS_URL
+    }
+  },
+  cacheService: {
+    resolve: "@medusajs/cache-redis",
+    options: {
+      redisUrl: REDIS_URL
+    }
+  },
+};
+
+/** @type {import('@medusajs/medusa').ConfigModule["projectConfig"]} */
+const projectConfig = {
+  jwtSecret: process.env.JWT_SECRET,
+  cookieSecret: process.env.COOKIE_SECRET,
+  store_cors: STORE_CORS,
+  database_url: DATABASE_URL,
+  admin_cors: ADMIN_CORS,
+  redis_url: REDIS_URL
+};
+//...
+```
+
+Since we are deploying the admin separately, disable the admin plugin's [serve option](https://docs.medusajs.com/admin/configuration#plugin-options).
+
+```js
+const plugins = [
+  // ...
+  {
+    resolve: "@medusajs/admin",
+    /** @type {import('@medusajs/admin').PluginOptions} */
+    options: {
+      // only enable `serve` in development
+      // you may need to add the NODE_ENV variable
+      // manually
+      serve: process.env.NODE_ENV === "development",
+      // other options...
+      autoRebuild: true,
+      develop: {
+        open: process.env.OPEN_BROWSER !== "false",
+      },
+    },
+  },
+]
+```
+
+This ensures that the admin isn't built or served in production. You can also change `@medusajs/admin` dependency to be a devdependency in `package.json`.
+
+Also, change the `build` command to remove the command that builds the admin inside the `package.json` file:
+
+```js
+"scripts": {
+  // ...
+  "build": "cross-env npm run clean && npm run build:server",
+}
+//...
+"devDependencies": {
+  //...
+  "@medusajs/admin": "^7.1.11",
+}
+```
+
+Commit your changes, and push them to your remote GitHub repository. Once your repository is ready on GitHub, log in to your Railway dashboard.
+
+### Create Project + PostgreSQL Database
+
+If you are using Neon for your PostgreSQL database please skip this step.
+
+On the Railway Dashboard, click on the **New Project** button and choose from the list the **Deploy PostgreSQL** option.
+
+![New PostgreSQL Railway](/new-postgresql-railway.png)
+
+A new database will be created and, after a few seconds, you'll be redirected to the project page where you'll see the newly-created database.
+
+![New Project Page Railway](/railway-new-project.png)
+
+### Create the Redis Database
+
+In the same project view, click on the **Create** button, choose the **Database** option and select **Add Redis**.
+
+![Add Redis to Railway](/railway-add-redis.png)
+
+A new Redis database will be added to the project view in a few seconds. Click on it to open the database sidebar.
+
+![Railway Project with Redis](/railway-redis-added.png)
+
+### Deploy Medusa in Server Mode
+
+In this section, you'll create a Medusa backend instance running in `server` runtime mode.
+
+In the same project view, click on the **Create** button and choose the **GitHub Repo** option. If you still haven't given GitHub permissions to Railway, choose the **Configure GitHub App** option. 
+
+![Add GitHub Repo to Railway Project](/railway-add-github-repo.png)
+
+Choose the repository from the GitHub Repo dropdown.
+
+![GitHub Repo Added to Railway Project](/railway-github-repo-added.png)
+
+### Configure Backend Environment Variables
+
+To configure the environment variables of your Medusa backend, click on the GitHub repo card and choose the **Variables** tab and add the following environment variables:
+
+```
+PORT=9000
+JWT_SECRET=something
+COOKIE_SECRET=something
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+REDIS_URL=${{Redis.REDIS_URL}}
+STORE_CORS=http://localhost:5173
+ADMIN_CORS=http://localhost:7001
+STRIPE_API_KEY=sk_test_XXXXXXXXXXXX
+```
+
+Notice that the values of `DATABASE_URL` and `REDIS_URL` reference the values from the PostgreSQL and Redis databases you created earlier.
+
+For Neon users, insert the URL to your Postgres database as the value to `DATABASE_URL`.
+
+>**NOTE**
+>
+>The values for `STORE_CORS` and `ADMIN_CORS` will be updated after deploying the admin and storefront.
+>Use strong, randomly generated secrets for `JWT_SECRET` and `COOKIE_SECRET`.
+
+![Add Environment Variables to Railway](/railway-add-env-var.png)
+
+### Change Backend's Start Command
+
+The start command is the command used to run the backend. You’ll change it to run any available migrations, then run the Medusa backend. This way if you create your own migrations or update the Medusa backend, it's guaranteed that these migrations run first before the backend starts.
+
+Click on the GitHub repository's card, select the **Settings** tab and scroll down to the **Deploy** section. Click on the **Start** command button and paste the following command:
+
+```bash
+medusa migrations run && medusa start
+```
+
+![Change Start command in Railway](/railway-change-start.png)
+
+
+### Add Domain Name
+
+Click on the Medusa server runtime card and select the **Settings** tab and scroll down to the **Networking** section. Either select **Custom Domain** or select **Generate Domain** to generate a random button.
+
+![Add Domain Name to Railway Project](/railway-generate-domain.png)
+
+### Deploy Changes
+
+At the top left of your project's dashboard page, there's a **Deploy** button that deploys all the changes you've made so far.
+
+![Railway Deploy button](/railway-deploy-button.png)
+
+Click on the button to trigger the deployment. The deployment will take a few minutes before it's ready.
+
+### Test the Backend
+
+Once the deployment is finished, you can access the Medusa backend on the custom domain/domain you've generated.
+
+For example, you can open the URL `<YOUR_APP_URL>/store/products` which returns the products available on your backend.
+
+![Railway Deployment Test](/railway-deploy-test.png)
+
+### Health Route
+
+Access `<YOUR_APP_URL>/health` to get health status of your deployed backend.
+
+![Raliway Deployment Health](/railway-deploy-health.png)
+
+### Create Admin User
+
+[Railway’s CLI tool](https://docs.railway.app/develop/cli) allows you to run commands locally, but using environment variables from your projects.
+
+To create an admin user in your deployed backend, run the following commands in the root of your Medusa project.
+
+Install the CLI tool as follows:
+```bash
+npm i -g @railway/cli
+```
+
+Login into your Railway account:
+```bash
+railway login --browserless
+```
+
+This will print a URL and a Pairing Code to the Terminal, which you can use to authenticate your CLI session. Follow the instructions to complete the authentication process.
+
+Associate your Medusa server project, environment and service with your current directory:
+```bash
+railway link
+```
+
+Run this to create an admin
+```bash
+railway run npx medusa user --email prodadmin@medusa-test.com --password supersecret
+```
 
 ## Deploy Medusa Admin
 
 We will deploy the Medusa Admin application on Cloudflare Pages.
 
-### Create GitHub Repo (Optional)
+### Create GitHub Repo
 
 Hosting providers like Cloudflare allow you to deploy your project directly from GitHub. This makes it easier for you to push changes and updates without having to manually trigger the update in the hosting provider.
 
 > **NOTE:**
 >
-> Even though you are just deploying the admin, you must include the entire Medusa backend project in the deployed repository. The build process of the admin uses many of the backend's repos.
+>*Even though you are just deploying the admin, you must include the entire Medusa backend project in the deployed repository. The build process of the admin uses many of the backend's repos.*
 
-```bash
-git init
-git remote add <GITHUB_URL>
-git add .
-git commit -m "Initial commit"
-git push
-```
+Navigate to the Medusa server directory `my-medusa-store` of your project folder in your local machine. Duplicate the directory and create a new GitHub repo based on this directory to handle all the config related to the admin only.
 
 ### Configure Build Command
 
-In the `package.json` of the Medusa backend, add or change a build script for the admin:
+In the `package.json` file of your new Medusa Admin repo, add or change the build script for the admin:
 
 ```json
 "scripts": {
@@ -1706,15 +2070,39 @@ In the `package.json` of the Medusa backend, add or change a build script for th
 
 ### Preparing Deployment
 
-- If your hosting provider supports choosing a Framework Preset, choose "Other" option as the Medusa Admin doesn't follow known framework presets.
-- Set the build command of your deployed project to use the `build:admin` command:
+Log in to your [Cloudflare Dashboard](https://dash.cloudflare.com/) and select **Workers & Pages**.
+
+![Cloudflare Dashboard](/cloudflare-dashboard.png)
+
+Select **Create application** then **Pages** then **Connect to Git**.
+
+You will be prompted to sign in with your preferred Git provider.
+
+Next, select the GitHub project for your Medusa Admin repo.
+
+Once you have selected a repository, select **Install & Authorize** and **Begin setup**. 
+
+![Select GitHub repo](/select-github-repo-cloudflare.png)
+
+You can then customize your deployment in **Set up builds and deployments**.
+
+Your **project name** will be used to generate your project's hostname.
+
+### Configure Build settings
+
+Set the build command of your deployed project to use the `build:admin` command:
 
 ```bash
 npm run build:admin
 ```
 
-- Set the output directory of your deployed project to `build`.
-- Add the environment variable `MEDUSA_ADMIN_BACKEND_URL` and set its value to the URL of your deployed Medusa backend.
+Set the output directory of your deployed project to `build`.
+
+Add the environment variable `MEDUSA_ADMIN_BACKEND_URL` and set its value to the URL of your deployed Medusa backend, that is the URL you got in the previous step on Railway.
+
+![Cloudflare Set up builds and deployments](/build-settings-cloudflare.png)
+
+<!--
 -  If your hosting provider supports URL rewrites, add a configuration to rewrite the `/(.*)` URL pattern to `/index.html`. For example, if you are deploying to Vercel you add the following in `vercel.json`:
 
 ```json
@@ -1722,6 +2110,15 @@ npm run build:admin
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
 ```
+-->
+
+### Save Configuration and Deploy Admin
+
+After you have finished setting your build configuration, select **Save and Deploy**. Your project build logs will output as Cloudflare Pages installs your project dependencies, builds the project, and deploys it to Cloudflare’s global network.
+
+When your project has finished deploying, you will receive a unique URL to view your deployed site.
+
+![Cloudflare Page URL](/cloudflare-admin-deploy-success.png)
 
 ### Configure CORS on the Deployed Backend
 
@@ -1731,24 +2128,50 @@ To send requests from the admin dashboard to the Medusa backend, you must set th
 ADMIN_CORS=<ADMIN_URL>
 ```
 
-Where `<ADMIN_URL>` is the URL of your admin dashboard that you just deployed. Then, restart your Medusa backend. Once the backend is running again, you can use your admin dashboard.
+Visit your Railway dashboard click on the GitHub repo card and choose the **Variables** tab to your deployed Medusa backend web service. Update the `ADMIN_CORS` environment variable. 
 
-### (OPTIONAL) Create Admin User
+Where `<ADMIN_URL>` is the URL of your admin dashboard that you just deployed on Cloudflare. 
 
-To log in to your dashboard, you must have an admin user. To create one, run the following command on your deployed backend:
+![Update Admin CORS in Railway](/railway-update-admin-cors.png)
+
+Then, redeploy your Medusa backend. Once the backend is running again, you can use your admin dashboard.
+
+### Log into Medusa Admin Dashboard
+
+<!--
+To log in to your dashboard, you must have an admin user. To create one, run the following command in a fresh terminal:
 
 ```bash
 npx medusa user --email admin@medusa-test.com --password supersecret
 ```
 
+First list the Admin users:
+```bash
+curl '{backend_url}/admin/users' \
+-H 'x-medusa-access-token: {api_token}'
+```
+
+Replace `{backend_url}` with the URL to your Medusa backend server and `{api_token}` with the `JWT_SECRET` value in your environment variables
+
 You can then log in using the specified email and password.
+
+-->
+
+Visit the URL to your Medusa Admin and log in using the user you created in the previous steps.
+
+![Medusa Admin on Cloudflare Pages](/cloudflare-admin-login.png)
+
+If all is working you should be able to log in to your dashboard and see all the orders you made previously when testing the development version of your store.
+
+![Medusa Admin Dashboard Logged In](/medusa-admin-dashboard-loggedin-cloudflare.png)
 
 ## Deploy Storefront
 
 We will deploy the Sveltekit storefront on Cloudflare Pages. 
 
-### Create a GitHub repo
+### Create GitHub repo
 
+<!--
 Create a new GitHub repository by visiting [repo.new](https://repo.new). After creating a new repo, go to your newly created project directory to prepare and push your local application to GitHub by running the following commands in your terminal:
 
 ```bash
@@ -1759,6 +2182,9 @@ git commit -m "Initial commit"
 git branch -M main
 git push -u origin main
 ```
+-->
+
+In your local machine, navigate to the folder, `storefront` containing your Sveltekit storefront source code. Duplicate the directory and create a new GitHub repo based on this directory.
 
 ### SvelteKit Cloudflare Configuration
 
@@ -1796,11 +2222,25 @@ export async function post(context) {
 
 ### Prepare Deployment via Cloudflare Dashboard
 
-Log in to the [Cloudflare Dashboard](https://dash.cloudflare.com/) and select your account.
+Log in to your [Cloudflare Dashboard](https://dash.cloudflare.com/) and select **Workers & Pages**.
 
-In Account Home, select **Workers & Pages** > **Create application** > **Pages** > **Connect to Git**.
+![Cloudflare Dashboard](/cloudflare-dashboard.png)
 
-You will be asked to authorize access to your GitHub account if you have not already done so. Cloudflare needs this authorization to deploy your projects from your GitHub account. You may narrow Cloudflare's access to specific repositories. However, you will have to manually update this list [within your GitHub settings](https://github.com/settings/installations) when you want to add more repositories to Cloudflare Pages.
+Select **Create application** then **Pages** then **Connect to Git**.
+
+You will be prompted to sign in with your preferred Git provider.
+
+Next, select the GitHub project for your Medusa Admin repo.
+
+Once you have selected a repository, select **Install & Authorize** and **Begin setup**. 
+
+![Select GitHub repo](/select-github-repo-cloudflare.png)
+
+### Configure Build Settings
+
+You can then customize your deployment in **Set up builds and deployments**.
+
+Your **project name** will be used to generate your project's hostname.
 
 Select the new GitHub repository that you create and, in **Set up builds and deployments**, provide the following information:
 
