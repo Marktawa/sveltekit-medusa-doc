@@ -225,7 +225,7 @@ STORE_CORS=http://localhost:5173
 
 After this, your Medusa server will be ready to receive a request from your storefront and send back responses if everything works as expected.
 
-### List Products on Svelitekit Storefront
+### List Products on Sveltekit Storefront
 
 Open up the `storefront` directory in your code editor, and create a new file named `src/routes/+page.js`. This file will export a load function and the return value which is available to the page via the `data` prop:
 
@@ -1571,6 +1571,47 @@ Make a payment using the Stripe Test card `4242 4242 4242 4242` and this will le
 
 ![Updated Storefront Success Page with Styling](https://mtm-sveltekit-medusa.pages.dev/success-page-ui.png)
 
+## Update Storefront Environment Variables
+
+In this step you will replace the hardcoded URL to the Medusa backend with an environment variable, `MEDUSA_BACKEND_URL` in all your storefront files. This will be useful when deploying the storefront in the next steps.
+
+Open up `.env` in  your Sveltekit Storefront and and add the following:
+
+```
+MEDUSA_BACKEND_URL=http://localhost:9000
+```
+
+Open up all the files in your storefront project folder where the URL to the Medusa backend is hardcoded. Add the following import statement at the top of each file:
+
+```svelte
+<script>
+import { MEDUSA_BACKEND_URL } from '$env/static/public';
+//...
+```
+
+Replace every occurence of `http://localhost:9000` with `MEDUSA_BACKEND_URL`. The files are `src/routes/+page.js`, `src/routes/+page.svelte`, and `src/routes/cart/+page.svelte`.
+
+The final result will be as follows:
+
+For `src/routes/+page.js`:
+
+```js
+import { MEDUSA_BACKEND_URL } from '$env/static/public'
+
+/** @type {import(./$types').PageLoad} */
+export async function load({ fetch }) {
+    const res = await fetch(`${MEDUSA_BACKEND_URL}/store/products`);
+    const payload = await res.json();
+    return { payload };
+}
+```
+
+The updated `src/routes/+page.svelte` will be as follows:
+
+```svelte
+
+```
+
 ## Deployment
 
 In this section we will look into the deployment of the ecommerce app. We will start off with the deployment of the Medusa Server and Admin then look into the deployment of the Sveltekit storefront.
@@ -2118,7 +2159,7 @@ After you have finished setting your build configuration, select **Save and Depl
 
 When your project has finished deploying, you will receive a unique URL to view your deployed site.
 
-![Cloudflare Page URL](/cloudflare-admin-deploy-success.png)
+![Cloudflare Page Admin URL](/cloudflare-admin-deploy-success.png)
 
 ### Configure CORS on the Deployed Backend
 
@@ -2205,13 +2246,13 @@ import adapter from '@sveltejs/adapter-cloudflare';
 const config = {
   kit: {
     adapter: adapter(),
-    // ... truncated ...
   }
 };
 
 export default config;
 ```
 
+<!--
 Access the added KV or Durable objects(or generally any binding) in your endpoint with `env`:
 
 ```js
@@ -2219,6 +2260,9 @@ export async function post(context) {
   const counter = context.platform.env.COUNTER.idFromName("A");
 }
 ```
+-->
+
+Push the changes you made in your repo to GitHub.
 
 ### Prepare Deployment via Cloudflare Dashboard
 
@@ -2230,11 +2274,11 @@ Select **Create application** then **Pages** then **Connect to Git**.
 
 You will be prompted to sign in with your preferred Git provider.
 
-Next, select the GitHub project for your Medusa Admin repo.
+Next, select the GitHub project for your Sveltekit storefront repo.
 
-Once you have selected a repository, select **Install & Authorize** and **Begin setup**. 
+Once you have selected a repository, select **Begin setup**. 
 
-![Select GitHub repo](/select-github-repo-cloudflare.png)
+![Select GitHub repo](/cloudflare-select-storefront-repo.png)
 
 ### Configure Build Settings
 
@@ -2242,15 +2286,22 @@ You can then customize your deployment in **Set up builds and deployments**.
 
 Your **project name** will be used to generate your project's hostname.
 
-Select the new GitHub repository that you create and, in **Set up builds and deployments**, provide the following information:
+Select the new GitHub repository that you created and, in **Set up builds and deployments**, provide the following information:
 
 |Configuration Option|Value|
 |---|---|
 |Production branch|`main`|
+|Framework preset|`SvelteKit`|
 |Build command|`npm run build`|
 |Build directory|`.svelte-kit/cloudflare`|
 
+Add the environment variables, `PUBLIC_STRIPE_KEY` for your Stripe Key and `MEDUSA_BACKEND_URL` for your Railway Medusa backend server URL.
+
+![Cloudflare Storefront Build Config](/cloudflare-storefront-build-config-info.png)
+
 Optionally, you can customize the **Project name** field. It defaults to the GitHub repository's name, but it does not need to match. The **Project name** value is assigned as your `*.pages.dev` subdomain.
+
+### Save Configuration and Deploy Storefront
 
 After completing configuration, click the **Save and Deploy** button.
 
@@ -2259,6 +2310,32 @@ You will see your first deploy pipeline in progress. Pages installs all dependen
 Cloudflare Pages will automatically rebuild your project and deploy it on every new pushed commit.
 
 Additionally, you will have access to [preview deployments](https://developers.cloudflare.com/pages/configuration/preview-deployments/), which repeat the build-and-deploy process for pull requests. With these, you can preview changes to your project with a real URL before deploying them to production.
+
+When your project has finished deploying, you will receive a unique URL to view your deployed site.
+
+![Cloudflare Page Storefront URL](/cloudflare-storefront-deploy-success.png)
+
+### Configure CORS on the Deployed Backend
+
+To send requests from the admin dashboard to the Medusa backend, you must set the `STORE_CORS` environment variable on your backend to the admin's URL:
+
+```
+STORE_CORS=<STORE_URL>
+```
+
+Visit your Railway dashboard click on the GitHub repo card and choose the **Variables** tab to your deployed Medusa backend web service. Update the `STORE_CORS` environment variable. 
+
+Where `<STORE_URL>` is the URL of your Sveltekit storefront that you just deployed on Cloudflare. 
+
+![Update Store CORS in Railway](/railway-update-store-cors.png)
+
+Then, redeploy your Medusa backend. Once the backend is running again, you can use your storefront.
+
+### Test Storefront
+
+Visit the URL to your storefront in your browser. If all is working your storefront home page should appear with all the products from the Medusa backend.
+
+![Sveltekit Storefront on Cloudflare Pages](/storefront-home-cloudflare.png)
 
 ## Conclusion
 
