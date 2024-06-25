@@ -1,28 +1,3 @@
-# Bejamas Proposal
-
-Medusa is an open source tool for quickly setting up a commerce backend. Couple that with Sveltekit, a frontend framework capable of  building storefronts. What do you get? A full stack, modular ecommerce app that can support a wide range of use cases. 
-
-What will this tutorial cover?
-- Installation and setup of the Medusa server API
-- Setup of the Medusa Admin User Interface
-- Creation of a Sveltekit app
-- Add page to display all products from the Medusa server API
-- Add page to display a single product
-- Add Cart and Checkout functionality to app
-- Add a payment provider (e.g. Stripe, PayPal)
-- Deployment of the storefront, admin and backend
-
-Prerequisites:
-- Some knowledge of HTML, CSS, and JavaScript
-- Knowledge of Sveltekit is a plus but not necessary
-- Node.js v16 or higher installed on your system
-
-
-Support materials:
-- A code repository with a well-detailed README to guide users on how to test the app.
-- A live version of the app
-- A short video demo of the app
-
 # Building an ecommerce store using Medusa and Sveltekit
 
 ## Introduction
@@ -1616,210 +1591,6 @@ The updated `src/routes/+page.svelte` will be as follows:
 
 In this section we will look into the deployment of the ecommerce app. We will start off with the deployment of the Medusa Server and Admin then look into the deployment of the Sveltekit storefront.
 
-<!--
-## Deploy Medusa Server
-
-We will deploy the Medusa Backend Server on [Render](https://render.com/). Render offers a free tier which is sufficient enough to host a Medusa Backend app.
-
-A bit about Render. Render is a unified cloud to build and run all apps and websites with free TLS certificates, a global CDN, DDoS protection, a private network, and auto-deploy from Git.
-
-### Set up Render
-
-Sign up and log in to your Render account.
-
-![Render Dashboard](/dashboard-render-com.png)
-
-### Create the PostgreSQL Database (for non-Neon users)
-
-If you have created a PostgreSQL Database using Neon please skip this step.
-
-Click the **New+** button, then click on the **PostgreSQL** button in your Render Dashboard or visit [dashboard.render.com/new/database](https://dashboard.render.com/new/database).
-
-![New PostgreSQL Render]()
-
-After clicking this, you will be redirected to the next page, where you can name and create the database.
-
-In the **Name** field, name your database server, `medusa_db-server`. In the **Database** field, give your database the same name as your local PostgreSQL database. For example, in this tutorial the name for the local hosted PostgreSQL database is `medusa_db`. Likewise for the **User** field, enter the same name as your local user, `medusa_admin`.
-
-For the **Region** field, select the most appropriate region based on your location. Set the **PostgreSQL Version** field to the latest version available.
-
-After filling these fields and choose a suitable plan for you and then click **Create Database**.
-
-![Create Database Render](/dashboard.render.com_new_database.png)
-
-Subsequently, you will be redirected to the PostgreSQL general page, where you will see key information related to your newly created database. This includes the `Hostname`, `Port`, `Database`, `Username`, `Password`, `Internal Database URL`, `External Database URL`, and `PSQL Command`.
-
-![Newly Created Database on Render](/database-info-render.png)
-
-### Create Redis Database
-
-Create a Redis database to handle the event queues of your Medusa server. On your Render dashboard, click the **New +** button and the **Redis** button or visit [dashboard.render.com/new/redis](https://dashboard.render.com/new/redis)
-
-You will be redirected to the next page, where you can name and create the Redis database instance. You can name it, `medusa-redis` or any other appropriate name.
-
-![Name and Create Redis Database Instance](/render-new-redis-2.png)
-
-By clicking the `Create Redis` button, you will be redirected to the Redis general page, where you will information related to your newly-created Redis instance.
-
-![Render Redis Instance Info]()
-
-You will use the **Internal Redis URL** in the next section.
-
-### Create GitHub Repo
-
-Navigate to the Medusa server directory `my-medusa-store` in your local machine. Duplicate the folder and create a new GitHub repo based on this directory to handle all the config related to the server only.
-
-### Configure Server for Production
-
-Open the `medusa-config.js` file in your new server repo.
-
-Update the following parts to enable caching using Redis.
-
-Uncomment the inner part of the following section:
-```js
-const modules = {
-  /*eventBus:
-    resolve: "@medusajs/event-bus-redis",
-```
-
-Uncomment the following section as well:
-```js
-  // Uncomment the following lines to enable REDIS
-  // redis_url: REDIS_URL
-```
-
-It then becomes:
-
-```js
-//...
-const modules = {
-  eventBus: {
-    resolve: "@medusajs/event-bus-redis",
-    options: {
-      redisUrl: REDIS_URL
-    }
-  },
-  cacheService: {
-    resolve: "@medusajs/cache-redis",
-    options: {
-      redisUrl: REDIS_URL
-    }
-  },
-};
-
-/** @type {import('@medusajs/medusa').ConfigModule["projectConfig"]} */
-const projectConfig = {
-  jwtSecret: process.env.JWT_SECRET,
-  cookieSecret: process.env.COOKIE_SECRET,
-  store_cors: STORE_CORS,
-  database_url: DATABASE_URL,
-  admin_cors: ADMIN_CORS,
-  redis_url: REDIS_URL
-};
-//...
-```
-
-Since we are deploying the admin separately, disable the admin plugin's [serve option](https://docs.medusajs.com/admin/configuration#plugin-options).
-
-```js
-const plugins = [
-  // ...
-  {
-    resolve: "@medusajs/admin",
-    /** @type {import('@medusajs/admin').PluginOptions} */
-    options: {
-      // only enable `serve` in development
-      // you may need to add the NODE_ENV variable
-      // manually
-      serve: process.env.NODE_ENV === "development",
-      // other options...
-      autoRebuild: true,
-      develop: {
-        open: process.env.OPEN_BROWSER !== "false",
-      },
-    },
-  },
-]
-```
-
-This ensures that the admin isn't built or served in production. You can also change `@medusajs/admin` dependency to be a devdependency in `package.json`.
-
-Also, change the `build` command to remove the command that builds the admin inside the `package.json` file:
-
-```js
-"scripts": {
-  // ...
-  "build": "cross-env npm run clean && npm run build:server",
-}
-//...
-"devDependencies": {
-  //...
-  "@medusajs/admin": "^7.1.11",
-}
-```
-
-Commit your changes, and push them to your remote GitHub repository. Once your repository is ready on GitHub, return to your Render dashboard to proceed with the deployment.
-
-On your Render dashboard, click the **New +** button, then click on the **Web Service** button or visit [dashboard.render.com/create?type=web](https://dashboard.render.com/create?type=web).
-
-Select **Build and deploy from a Git repository** in the **Create a new Web Service** menu then click on **Next**:
-
-![Render - Create a new Web Service](/render-new-web-service.png)
-
-Connect your Medusa server repo. Select or search for your repository and click the **Connect** button.
-
-![Connect repo to Render](/render-select-repo_type=web.png)
-
-This opens a new page where you can add all the necessary information for your server app service.
-
-Here, you must provide a unique name for your project, specify the region in which your web service will run, the repository branch to be used for your web service, the root directory, the runtime, the build command, and the start command.
-
-Please note that you should replace the original start command with the following:
-
-```bash
-medusa migrations run && medusa start
-```
-
-This particular start command enables you to create and execute your migrations or update the Medusa backend. Additionally, it ensures that these migrations are executed before the backend starts, guaranteeing their completion.
-
-### Add Environment Variables
-
-To add an environment variable, go to the **Environment Variables** section and select **Add Environment Variable** with the following variables:
-
-```
-PORT=9000
-JWT_SECRET=something
-COOKIE_SECRET=something
-DATABASE_URL=<<DATABASE_URL>>
-REDIS_URL=<<REDIS_URL>>
-STORE_CORS=http://localhost:5173
-STRIPE_API_KEY=<<STRIPE SECRET KEY>>
-```
-
-> **NOTE**
->
-> The `STORE_CORS` will be updated later after deploying the storefront.
-> It’s recommended to use other values for `JWT_SECRET` and `COOKIE_SECRET` than `something` for better security.
-
-
-The last properties are the URLs to connect to the databases. You need to add the internal database URLs you got when you created the Postgres and Redis databases earlier.
-
-Neon users simply need to add the URL from the previous steps.
-
-Scroll to the bottom of the **Settings** page and click **Create Web Service** button.
-
-![Render Web Service Configuration](/render-new-web-info.png)
-
-Upon successful deployment, you will observe a status message indicating that the deployment has been successful with the text **Live** with the URL to your backend displayed as well.
-
-![Deployment Overview in Render Dashboard](/render-successful-deploy.png)
-
-### Test the Backend
-
-Once the backend has been successfully deployed, you can access the app in your browser using the domain name. For instance, entering the URL `<YOUR_APP_URL>/store/products` in your browser will display the currently available products on your backend.
-
-![Successful Deployment Test](/test-server.png)
--->
 
 ## Deploy Medusa Server
 
@@ -2143,16 +1914,6 @@ Add the environment variable `MEDUSA_ADMIN_BACKEND_URL` and set its value to the
 
 ![Cloudflare Set up builds and deployments](/build-settings-cloudflare.png)
 
-<!--
--  If your hosting provider supports URL rewrites, add a configuration to rewrite the `/(.*)` URL pattern to `/index.html`. For example, if you are deploying to Vercel you add the following in `vercel.json`:
-
-```json
-{
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
-}
-```
--->
-
 ### Save Configuration and Deploy Admin
 
 After you have finished setting your build configuration, select **Save and Deploy**. Your project build logs will output as Cloudflare Pages installs your project dependencies, builds the project, and deploys it to Cloudflare’s global network.
@@ -2179,25 +1940,6 @@ Then, redeploy your Medusa backend. Once the backend is running again, you can u
 
 ### Log into Medusa Admin Dashboard
 
-<!--
-To log in to your dashboard, you must have an admin user. To create one, run the following command in a fresh terminal:
-
-```bash
-npx medusa user --email admin@medusa-test.com --password supersecret
-```
-
-First list the Admin users:
-```bash
-curl '{backend_url}/admin/users' \
--H 'x-medusa-access-token: {api_token}'
-```
-
-Replace `{backend_url}` with the URL to your Medusa backend server and `{api_token}` with the `JWT_SECRET` value in your environment variables
-
-You can then log in using the specified email and password.
-
--->
-
 Visit the URL to your Medusa Admin and log in using the user you created in the previous steps.
 
 ![Medusa Admin on Cloudflare Pages](/cloudflare-admin-login.png)
@@ -2211,19 +1953,6 @@ If all is working you should be able to log in to your dashboard and see all the
 We will deploy the Sveltekit storefront on Cloudflare Pages. 
 
 ### Create GitHub repo
-
-<!--
-Create a new GitHub repository by visiting [repo.new](https://repo.new). After creating a new repo, go to your newly created project directory to prepare and push your local application to GitHub by running the following commands in your terminal:
-
-```bash
-git init
-git remote add origin https://github.com/<your-gh-username>/<repository-name>
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git push -u origin main
-```
--->
 
 In your local machine, navigate to the folder, `storefront` containing your Sveltekit storefront source code. Duplicate the directory and create a new GitHub repo based on this directory.
 
@@ -2251,16 +1980,6 @@ const config = {
 
 export default config;
 ```
-
-<!--
-Access the added KV or Durable objects(or generally any binding) in your endpoint with `env`:
-
-```js
-export async function post(context) {
-  const counter = context.platform.env.COUNTER.idFromName("A");
-}
-```
--->
 
 Push the changes you made in your repo to GitHub.
 
@@ -2355,93 +2074,3 @@ By following this tutorial, you've gained valuable experience in creating a mode
 This project serves as an excellent starting point for further customization and expansion. You can now add more features, optimize performance, and tailor the user interface to meet specific business requirements. 
 
 Remember that ecommerce development is an ongoing process, and you should continually update and improve your application based on user feedback and changing market needs. With the knowledge gained from this tutorial, you're well-equipped to tackle more complex ecommerce challenges and create innovative online shopping experiences.
-
----
-
-## Rough Notes
-
-I want the cart to load asynchronously using await. Maybe like this:
-
-`src/routes/cart/+page.svelte`
-```svelte
-<!-- src/routes/cart/+page.svelte -->
-<script>
-    import { onMount } from "svelte";
-
-    let data;
-    let email;
-    let total;
-    let items = [];
-    let cartloaded = false;
-
-    onMount(async () => {
-        const id = localStorage.getItem("cart_id");
-        const res = await fetch(`http://localhost:9000/store/carts/${id}`, {
-            credentials: "include",
-        });
-        data = await res.json();
-        items = data.cart.items;
-        total = data.cart.total;
-        cartloaded = true;
-    });
-
-    async function addCustomer() {
-        const id = localStorage.getItem("cart_id");
-        await fetch(`http://localhost:9000/store/carts/${id}`, {
-            method: "POST",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                email: email,
-            }),
-        })
-        .then((response) => response.json())
-        .then(({ cart }) => {
-            console.log("Customer ID is " + cart.customer_id)
-            console.log("Customer email is " + cart.email)
-        });
-    }
-</script>
-
-<h1>Welcome to the Medusa SvelteKit Store</h1>
-<h2>Cart</h2>
-
-{#if cartloaded}
-<ul>
-    {#each items as item}
-        <li>
-            TITLE: {item.title} PRICE: {item.unit_price} QUANTITY: {item.quantity}
-        </li>
-    {/each}
-</ul>
-<p>The total price for your cart is {total}</p>
-<p>Enter your email to Proceed to Checkout</p>
-<input id="email" type="email" bind:value={email}>
-<button type="submit" on:click={() => {
-    addCustomer();
-    alert('Added your Email');
-    }}
->
-    Submit
-</button>
-{:else}
-  <p>Loading...</p>
-{/if}
-```
-
-How about adding the following functions into a Utility JS library `util.js`:
-
-- `addCustomer`
-- `addProductToCart`
-- `fetchCart`
-
-
-Draw UI interactions for what you want to achieve:
-- When customer clicks the `Submit` button after filling the form to provide his email, the cart should take him to the checkout page.
-- It should look like this start with the statement: "Please provide us with your email to proceed to checkout"
-- The cart should have a `Reset Cart` button which clears the cart and shows the message "The Cart is Empty." and  a link to the store page with the message " Return to the Shop and Add Items to your cart".
-- Each time a customer clicks on a product, a popover with the message "{Name of product} has been added to your cart" should appear and disappears once the customer clicks the Close icon or an Empty space.
-
-The currency needs to be converted to its decimal value.
