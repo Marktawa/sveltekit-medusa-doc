@@ -1,12 +1,14 @@
 # Building an ecommerce store using Medusa and Sveltekit
 
+![cover](/gh-cover-inter-tinified.png)
+
 ## Introduction
 
 Medusa is an open source tool that can help you set up a headless ecommerce server backend with relative ease. Couple that with Sveltekit, a frontend framework for building web apps. What do you get? A full stack, modular ecommerce app that can support a wide range of use cases.
 
 ### What is this tutorial for?
 
-This tutorial will teach you how to set up a simple ecommerce web app using Medusa as your store backend and Sveltekit for the visual storefront. It will showcase the fundamental building blocks required to run the app in development, testing, staging and production stages as well as showcase how you can deploy the app. At the end of this tutorial you should have acquired the overarching knowledge necessary in building ecommerce apps of a composable nature.
+This tutorial will teach you how to set up a simple ecommerce web app using Medusa as your store backend and Sveltekit for the visual storefront. It will showcase the fundamental building blocks required to run the app in development and production stages as well as showcase how you can deploy the app. At the end of this tutorial you should have acquired the overarching knowledge necessary in building ecommerce apps of a composable nature.
 
 ### Why Medusa?
 
@@ -28,12 +30,12 @@ To follow along with the tutorial you need to have some knowledge of the followi
 In addition to knowing these tools, your computer system should have the following packages installed:
 - Node.js (v18 and above) 
 - yarn (optional)
-- git (optional)
+- git
 
 Before proceeding with the tutorial you can check out the following links for useful resources:
 - [Video demo]().
-- [Live link of the app]().
-- [Git repo containing the project source code]().
+- [Live link of the app](https://sveltekit-medusa-storefront.pages.dev/).
+- [Git repo containing the project source code](https://github.com/Marktawa/sveltekit-medusa).
 
 ## Installation and setup of the Medusa server API
 
