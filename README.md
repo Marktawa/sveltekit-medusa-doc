@@ -33,7 +33,7 @@ In addition to knowing these tools, your computer system should have the followi
 - git
 
 Before proceeding with the tutorial you can check out the following links for useful resources:
-- [Video demo]().
+- [Video demo](https://www.youtube.com/watch?v=ghMgYLWTUlk).
 - [Live link of the app](https://sveltekit-medusa-storefront.pages.dev/).
 - [Git repo containing the project source code](https://github.com/Marktawa/sveltekit-medusa).
 
@@ -73,7 +73,7 @@ medusa new my-medusa-store
 
 You will be asked to specify your PostgreSQL database credentials. Choose "Skip database setup".
 
-A new directory named `my-medusa-store` will be created to store the server files
+A new directory named `my-medusa-store` will be created to store the server files.
 
 ### Configure Database - Neon Users
 
@@ -1555,29 +1555,27 @@ In this step you will replace the hardcoded URL to the Medusa backend with an en
 Open up `.env` in  your Sveltekit Storefront and and add the following:
 
 ```
-MEDUSA_BACKEND_URL=http://localhost:9000
+PUBLIC_MEDUSA_BACKEND_URL=http://localhost:9000
 ```
 
 Open up all the files in your storefront project folder where the URL to the Medusa backend is hardcoded. Add the following import statement at the top of each file:
 
 ```svelte
 <script>
-import { MEDUSA_BACKEND_URL } from '$env/static/public';
+import { PUBLIC_MEDUSA_BACKEND_URL } from '$env/static/public';
 //...
 ```
 
-Replace every occurence of `http://localhost:9000` with `MEDUSA_BACKEND_URL`. The files are `src/routes/+page.js`, `src/routes/+page.svelte`, and `src/routes/cart/+page.svelte`.
+Replace every occurence of `http://localhost:9000` with `PUBLIC_MEDUSA_BACKEND_URL`. The files are `src/routes/+page.js`, `src/routes/+page.svelte`, `src/routes/cart/+page.svelte`, and `src/routes/checkout/+page.svelte`.
 
-The final result will be as follows:
-
-For `src/routes/+page.js`:
+The following is the updated `src/routes/+page.js`:
 
 ```js
 import { MEDUSA_BACKEND_URL } from '$env/static/public'
 
 /** @type {import(./$types').PageLoad} */
 export async function load({ fetch }) {
-    const res = await fetch(`${MEDUSA_BACKEND_URL}/store/products`);
+    const res = await fetch(`${PUBLIC_MEDUSA_BACKEND_URL}/store/products`);
     const payload = await res.json();
     return { payload };
 }
@@ -1586,7 +1584,165 @@ export async function load({ fetch }) {
 The updated `src/routes/+page.svelte` will be as follows:
 
 ```svelte
+<script>
+  /** @type {import('./$types').PageData} */
+  export let data;
 
+  import { onMount } from "svelte";
+  import { PUBLIC_MEDUSA_BACKEND_URL } from '$env/static/public';
+
+  onMount(async () => {
+    fetch(`${PUBLIC_MEDUSA_BACKEND_URL}/store/carts`, {
+      method: "POST",
+      credentials: "include",
+    })
+      .then((response) => response.json())
+      .then(({ cart }) => {
+        localStorage.setItem("cart_id", cart.id);
+        console.log("The cart ID is " + localStorage.getItem("cart_id"));
+      });
+  });
+
+  function addProductToCart(variant_id) {
+    const id = localStorage.getItem("cart_id");
+    fetch(`${PUBLIC_MEDUSA_BACKEND_URL}/store/carts/${id}/line-items`, {
+      method: "POST",
+      dentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        variant_id,
+        quantity: 1,
+      }),
+    }).then((response) => response.json());
+    //.then(({ cart }) => setCart(cart));
+  }
+</script>
+<!--...-->
+```
+
+The updated `src/routes/cart/+page.svelte` will be as follows:
+
+```svelte
+<script>
+    import { onMount } from "svelte";
+    import { PUBLIC_MEDUSA_BACKEND_URL } from '$env/static/public';
+
+    let data;
+    let email;
+    let total;
+    let items = [];
+
+    onMount(async () => {
+        const id = localStorage.getItem("cart_id");
+        const res = await fetch(`${PUBLIC_MEDUSA_BACKEND_URL}/store/carts/${id}`, {
+            credentials: "include",
+        });
+        data = await res.json();
+        items = data.cart.items;
+        total = data.cart.total;
+    });
+
+    function addCustomer() {
+        const id = localStorage.getItem("cart_id");
+        fetch(`${PUBLIC_MEDUSA_BACKEND_URL}/store/carts/${id}`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                email: email,
+            }),
+        })
+            .then((response) => response.json())
+            .then(({ cart }) => {
+                console.log("Customer ID is " + cart.customer_id);
+                console.log("Customer email is " + cart.email);
+            });
+    }
+</script>
+<!--...-->
+```
+
+The following is the updated `src/routes/checkout/+page.svelte`:
+
+```svelte
+<script>
+  import { goto } from '$app/navigation';
+  import { onMount } from 'svelte';
+  import { loadStripe } from '@stripe/stripe-js';
+  import { PUBLIC_STRIPE_KEY } from '$env/static/public';
+  import { PUBLIC_MEDUSA_BACKEND_URL } from '$env/static/public';
+  import { Elements, PaymentElement } from 'svelte-stripe';
+  import Medusa from '@medusajs/medusa-js';
+
+  let stripe = null;
+  let clientSecret = null;
+  let error = null;
+  let elements;
+  let processing = false;
+
+  let cartId = null;
+
+  onMount(async () => {
+    stripe = await loadStripe(PUBLIC_STRIPE_KEY);
+    const client = new Medusa({ baseUrl: PUBLIC_MEDUSA_BACKEND_URL, maxRetries: 3 });
+    cartId = localStorage.getItem("cart_id");
+
+    try {
+      const { cart } = await client.carts.createPaymentSessions(cartId);
+      const isStripeAvailable = cart.payment_sessions?.some(
+        (session) => session.provider_id === 'stripe'
+      );
+
+      if (!isStripeAvailable) return;
+
+      const { cart: updatedCart } = await client.carts.setPaymentSession(cartId, {
+        provider_id: 'stripe',
+      });
+
+      setClientSecret(updatedCart.payment_session.data.client_secret);
+    } catch (error) {
+      console.error('Error creating payment session:', error);
+    }
+  });
+
+  function setClientSecret(secret) {
+    clientSecret = secret;
+  }
+
+  async function submit() {
+    // avoid processing duplicates
+    if (processing) return
+
+    processing = true
+
+    // confirm payment with stripe
+    const result = await stripe.confirmPayment({
+      elements,
+      redirect: 'if_required'
+    })
+
+    // log results, for debugging
+    console.log({ result })
+
+    if (result.error) {
+      // payment failed, notify user
+      error = result.error
+      processing = false
+    } else {
+      // payment succeeded, redirect to "thank you" page
+      const client = new Medusa({ baseUrl: PUBLIC_MEDUSA_BACKEND_URL, maxRetries: 3 });
+      const response = await client.carts.complete(cartId);
+      console.log(response);
+      goto('../thanks')
+    }
+  }
+</script>
+
+<!--...-->
 ```
 
 ## Deployment
@@ -1775,7 +1931,7 @@ STRIPE_API_KEY=sk_test_XXXXXXXXXXXX
 
 Notice that the values of `DATABASE_URL` and `REDIS_URL` reference the values from the PostgreSQL and Redis databases you created earlier.
 
-For Neon users, insert the URL to your Postgres database as the value to `DATABASE_URL`.
+For Neon users, insert the URL to your Postgres database hosted on Neon as the value to `DATABASE_URL`.
 
 >**NOTE**
 >
