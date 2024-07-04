@@ -2,9 +2,9 @@
 
 ![cover](/gh-cover-inter-tinified.png)
 
-## Introduction
-
 Medusa is an open source tool that can help you set up a headless ecommerce server backend with relative ease. Couple that with Sveltekit, a frontend framework for building web apps. What do you get? A full stack, modular ecommerce app that can support a wide range of use cases.
+
+## Introduction
 
 ### What is this tutorial for?
 
@@ -28,9 +28,9 @@ To follow along with the tutorial you need to have some knowledge of the followi
 - Knowledge of Medusa is a bonus but not a requirement.
 
 In addition to knowing these tools, your computer system should have the following packages installed:
-- Node.js (v18 and above) 
-- yarn (optional)
-- git
+- [Node.js (v18 and above)](https://nodejs.org/en/download/package-manager) 
+- [yarn (optional)](https://yarnpkg.com/getting-started/install)
+- [git](https://git-scm.com/downloads)
 
 Before proceeding with the tutorial you can check out the following links for useful resources:
 - [Video demo](https://www.youtube.com/watch?v=ghMgYLWTUlk).
@@ -1891,6 +1891,24 @@ On the Railway Dashboard, click on the **New Project** button and choose from th
 A new database will be created and, after a few seconds, you'll be redirected to the project page where you'll see the newly-created database.
 
 ![New Project Page Railway](/railway-new-project.png)
+
+### Migrate local PostgreSQL database to Railway
+
+If you are using Neon for your PostgreSQL database please skip this step.
+
+Open your terminal and run the following command to dump the local database to file:
+
+```bash
+pg_dump medusa_db > medusa_db.sql
+```
+
+Copy the `DATABASE_URL` from your Railway Dashboard. Then export the database dump, `medusa_db.sql` into the new database on the remote Railway server:
+
+```bash
+psql DATABASE_URL < medusa_db.sql
+```
+
+Replace `DATABASE_URL` with the value from your Railway Dashboard.
 
 ### Create the Redis Database
 
